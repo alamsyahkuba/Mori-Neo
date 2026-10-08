@@ -208,10 +208,6 @@ header h1 {
   font-weight: 700;
 }
 
-.dynamic-greeting {
-  margin: 24px 0 8px 0;
-}
-
 /* --------------------------------------------------------------------------
    5. Bottom navigation — floating raised bar with inset active pill
    -------------------------------------------------------------------------- */
@@ -283,10 +279,26 @@ input[type="text"]:focus,
     0 0 0 2px rgba(var(--primary-rgb), 0.3);
 }
 
+input[type="text"]:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+.batch-url-textarea {
+  padding-right: 86px;
+}
+
 .search-icon {
   color: var(--text-secondary);
   filter: none;
-  opacity: 0.7;
+  opacity: 1;
 }
 
 .input-action-btn {
@@ -341,8 +353,7 @@ input[type="text"]:focus,
 }
 
 #downloadBtn:hover {
-  background-color: var(--primary);
-  filter: brightness(1.12);
+  background-color: color-mix(in srgb, var(--primary) 86%, var(--on-primary));
   transform: translateY(-1px);
   box-shadow:
     var(--neo-accent-sh),
@@ -358,6 +369,10 @@ input[type="text"]:focus,
   opacity: 0.55;
   box-shadow: none;
   transform: none;
+}
+
+#downloadBtn.is-cancelling {
+  color: var(--danger-text) !important;
 }
 
 .primary-btn,
@@ -493,7 +508,12 @@ input[type="text"]:focus,
 }
 
 .dl-all-btn:hover {
-  filter: brightness(1.12);
+  background-color: color-mix(
+    in srgb,
+    var(--primary) 86%,
+    var(--on-primary)
+  ) !important;
+  filter: none;
 }
 
 .dl-all-btn:active {
@@ -610,6 +630,10 @@ input[type="text"]:focus,
   box-shadow: var(--neo-raise);
 }
 
+[data-theme="dark"] .settings-menu-item:hover {
+  background: var(--surface);
+}
+
 .settings-menu-item:active {
   transform: translateY(1px);
   box-shadow: var(--neo-inset-sm);
@@ -635,12 +659,15 @@ input[type="text"]:focus,
   transition: background-color 0.16s ease;
 }
 
+.settings-item.path-setting-item {
+  border-bottom: 1px solid var(--neo-divider);
+}
+
 .settings-item:hover {
   background-color: rgba(var(--primary-rgb), 0.03);
 }
 
 .settings-item:has(.custom-select):hover,
-.settings-item.stacked-item:hover,
 .settings-item.path-setting-item:hover {
   background-color: transparent;
 }
@@ -660,6 +687,15 @@ input[type="text"]:focus,
 .back-btn-settings:active {
   box-shadow: var(--neo-accent-press);
   transform: translateY(1px);
+}
+
+.action-label {
+  color: var(--danger-text);
+}
+
+.action-label.danger {
+  color: var(--danger-text);
+  text-shadow: none;
 }
 
 .custom-select {
@@ -693,6 +729,10 @@ input[type="text"]:focus,
   background: rgba(var(--primary-rgb), 0.07);
 }
 
+[data-theme="dark"] .dropdown-menu .dropdown-item:hover {
+  background: rgba(var(--primary-rgb), 0.07);
+}
+
 /* Toggle switch — inset track, raised knob */
 .toggle-switch {
   width: 46px;
@@ -700,7 +740,7 @@ input[type="text"]:focus,
 }
 
 .toggle-switch label {
-  background-color: rgba(var(--primary-rgb), 0.16);
+  background-color: rgba(var(--primary-rgb), 0.5);
   box-shadow: var(--neo-inset-sm);
   transition: background-color 0.25s ease;
 }
@@ -746,10 +786,8 @@ input[type="text"]:focus,
   box-shadow: var(--neo-inset-sm);
 }
 
-.settings-item.stacked-item .info-val {
-  border: none;
-  background: rgba(var(--primary-rgb), 0.06);
-  box-shadow: var(--neo-inset-sm);
+.settings-item .info-val {
+  opacity: 1;
 }
 
 .path-display-pill {
@@ -838,6 +876,16 @@ input[type="text"]:focus,
 
 .mori-status-chip {
   background: rgba(var(--primary-rgb), 0.08);
+}
+
+.mori-status-chip.granted {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--text-main);
+}
+
+.mori-status-chip.warning {
+  background: rgba(234, 179, 8, 0.2);
+  color: var(--text-main);
 }
 
 .bg-anim-card {
@@ -931,13 +979,24 @@ input[type="text"]:focus,
   box-shadow: var(--neo-raise-sm);
 }
 
-.edit-btn:hover,
+.edit-btn:hover {
+  box-shadow: var(--neo-raise);
+}
+
 .clear-all-btn:hover {
+  background: var(--surface);
+  transform: none;
   box-shadow: var(--neo-raise);
 }
 
 .edit-btn:active,
-.clear-all-btn:active,
+.clear-all-btn:active {
+  background: var(--surface);
+  color: var(--text-main);
+  box-shadow: var(--neo-inset-sm);
+  transform: translateY(1px);
+}
+
 .done-btn:active {
   box-shadow: var(--neo-inset-sm);
   transform: translateY(1px);
@@ -996,7 +1055,30 @@ input[type="text"]:focus,
 }
 
 .confirm-actions .cancel-btn {
-  border-right: 1px solid var(--neo-divider);
+  border-right: 0;
+  border-inline-end: 1px solid var(--neo-divider);
+}
+
+.confirm-actions .ok-btn {
+  color: var(--danger-text);
+}
+
+.path-status {
+  color: var(--danger-text);
+}
+
+.modal-fav-btn {
+  background: var(--surface);
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+}
+
+.modal-fav-btn:hover {
+  box-shadow: var(--neo-raise);
+}
+
+.modal-fav-btn:active {
+  box-shadow: var(--neo-inset-sm);
 }
 
 .modal-thumb-container {
@@ -1020,6 +1102,7 @@ input[type="text"]:focus,
   border: 2px solid rgba(var(--primary-rgb), 0.4);
   background: var(--bg-color);
   box-shadow: var(--neo-inset-sm);
+  opacity: 1;
 }
 
 .guide-checkbox input:checked + .checkmark {
@@ -1070,6 +1153,27 @@ input[type="text"]:focus,
   color: var(--text-main);
 }
 
+.batch-item-status.success,
+.batch-item-status.completed {
+  background: rgba(46, 204, 113, 0.16);
+  color: var(--text-main);
+}
+
+.batch-item-status.downloading {
+  background: rgba(52, 152, 219, 0.16);
+  color: var(--text-main);
+}
+
+.batch-item-status.error {
+  background: rgba(231, 76, 60, 0.14);
+  color: var(--text-main);
+}
+
+.batch-item-status.skipped {
+  background: rgba(230, 126, 34, 0.16);
+  color: var(--text-main);
+}
+
 #batchDownloadAllBtn {
   background-color: var(--primary);
   color: var(--on-primary);
@@ -1112,6 +1216,15 @@ input[type="text"]:focus,
 
 .data-saver-placeholder {
   background-color: var(--bg-color);
+}
+
+.download-bubble-container {
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.mori-player-big-play {
+  border: none;
+  box-shadow: var(--neo-raise-sm);
 }
 
 #loader {

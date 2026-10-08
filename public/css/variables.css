@@ -3,9 +3,7 @@
 :root {
   /* Neumorphic palette (light) — soft warm neutral surfaces */
   --bg-color: #e7e5df;
-  --bg-rgb: 231, 229, 223;
   --surface: #edebe5;
-  --surface-rgb: 237, 235, 229;
   --primary: #1a1917;
   --primary-rgb: 26, 25, 23;
   --on-primary: #f6f4ee;
@@ -27,7 +25,10 @@
   --bg-card: var(--surface);
   --bg-secondary: #e1dfd7;
   --bg-main: var(--bg-color);
+  /* Filled badge background (paired with white text in JS) */
   --color-danger: #c62828;
+  /* Danger text on light surfaces (AA at small sizes) */
+  --danger-text: #c62828;
   --transition: all 0.2s ease;
   /* Animation Speed */
   --anim-duration: 0.2s;
@@ -37,9 +38,7 @@
 [data-theme="dark"] {
   /* Neumorphic palette (dark) — lifted graphite, never pure black */
   --bg-color: #26262b;
-  --bg-rgb: 38, 38, 43;
   --surface: #2d2d34;
-  --surface-rgb: 45, 45, 52;
   --primary: #f8f8fa;
   --primary-rgb: 248, 248, 250;
   --on-primary: #1c1c20;
@@ -49,7 +48,8 @@
   --border-color: rgba(255, 255, 255, 0.1);
   --surface-hover: #35353e;
   --bg-secondary: #35353e;
-  --color-danger: #ff6b6b;
+  --color-danger: #c62828;
+  --danger-text: #ff6b6b;
 }
 
 /* Font Presets */
@@ -132,6 +132,11 @@ body.glass-deep {
 body.corner-sharp {
   --radius-l: 8px;
   --radius-xl: 10px;
+  --radius-lg: 8px;
+  --radius-s: 6px;
+}
+body.corner-sharp .bottom-nav {
+  border-radius: 10px !important;
 }
 body.corner-sharp input[type="text"],
 body.corner-sharp .custom-select,
@@ -161,6 +166,9 @@ body.corner-modern {
 body.corner-round {
   --radius-l: 16px;
   --radius-xl: 24px;
+}
+body.corner-round .bottom-nav {
+  border-radius: 28px !important;
 }
 body.corner-round input[type="text"] {
   border-radius: 28px !important;

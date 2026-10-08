@@ -87,3 +87,13 @@
   right: 0;
 }
 
+
+/* Toggle switch knob travels with the writing direction */
+[dir="rtl"] .toggle-switch label:before {
+  left: auto;
+  right: 3px;
+}
+
+[dir="rtl"] .toggle-switch input:checked + label:before {
+  transform: translateX(-20px);
+}
