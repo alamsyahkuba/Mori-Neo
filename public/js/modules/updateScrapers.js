@@ -143,7 +143,7 @@ export async function checkScraperUpdate(isManual = false) {
           <div>${lang["label-scraper-updated-desc"] || "New Scraper Core is available:"} <strong>v${remoteVer}</strong> (Current: v${currentVer})</div>
           ${changelogHtml}
           <div style="margin-top:14px;">
-            <button id="applyScraperUpdateBtn" class="primary-btn" style="width:100%;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;border:none;background:var(--primary);color:#fff;">
+            <button id="applyScraperUpdateBtn" class="primary-btn" style="width:100%;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;border:none;background:var(--primary);color:var(--on-primary);">
               ${lang["btn-update"] || "UPDATE NOW"}
             </button>
           </div>
