@@ -129,6 +129,46 @@ android {
 }
 ```
 
+> `android/app/build.gradle` also accepts **environment variables**
+> (`ANDROID_KEYSTORE_FILE`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
+> `ANDROID_KEY_PASSWORD`) which take precedence over the local defaults above.
+> This is how CI signs builds — no keystore or password is ever committed.
+
+#### CI Signing Secrets (GitHub Actions)
+
+The Release workflow (`.github/workflows/release.yml`) produces a **signed**
+Android APK using secrets stored in the repository — never in the code.
+Configure them once under *Settings → Secrets and variables → Actions* (or
+with the GitHub CLI):
+
+| Secret                    | Contents                                                |
+| ------------------------- | ------------------------------------------------------- |
+| `ANDROID_KEYSTORE_BASE64` | Base64 of the release keystore: `base64 -w0 release.keystore` |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password                                     |
+| `ANDROID_KEY_ALIAS`       | Key alias                                               |
+| `ANDROID_KEY_PASSWORD`    | Private key password for that alias                     |
+
+```bash
+# examples — the tool prompts for values; never put real values in commands
+# that are logged, in the repo, or in documentation.
+gh secret set ANDROID_KEYSTORE_BASE64   # then paste: base64 -w0 release.keystore
+gh secret set ANDROID_KEYSTORE_PASSWORD
+gh secret set ANDROID_KEY_ALIAS
+gh secret set ANDROID_KEY_PASSWORD
+```
+
+What the `build-android` job does with them:
+
+1. Fails fast if any of the four secrets is missing (nothing is published).
+2. Decodes the keystore to a **temporary file on the runner only** and
+   validates it with `keytool -list`.
+3. Builds with `./gradlew assembleRelease` (Java 21).
+4. Verifies the result with `zipalign -c -v 4` **and**
+   `apksigner verify --verbose` — a failure fails the job and skips publishing.
+5. Publishes `Mori-v{VERSION}-android.apk` (artifact `Mori-Android-APK`,
+   attached to the GitHub Release on tag builds).
+6. Deletes the temporary keystore in a final `if: always()` step.
+
 ---
 
 ### 🖥️ Building for Desktop (macOS & Windows)

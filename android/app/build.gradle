@@ -33,12 +33,33 @@ android {
     }
     signingConfigs {
         release {
-            def keystoreFile = file('release.keystore')
+            // CI: ANDROID_KEYSTORE_FILE (temp file decoded from the
+            // ANDROID_KEYSTORE_BASE64 secret) plus password/alias secrets are
+            // supplied via environment variables — never committed to the repo.
+            // Local: falls back to android/app/release.keystore with the
+            // documented default credentials (see CONTRIBUTING.md).
+            def envKeystorePath = System.getenv("ANDROID_KEYSTORE_FILE")
+            def keystoreFile = envKeystorePath ? file(envKeystorePath) : file('release.keystore')
+            if (envKeystorePath && !keystoreFile.exists()) {
+                throw new GradleException("ANDROID_KEYSTORE_FILE is set but the keystore does not exist: ${envKeystorePath}")
+            }
             if (keystoreFile.exists()) {
                 storeFile keystoreFile
-                storePassword 'android123'
-                keyAlias 'mori'
-                keyPassword 'android123'
+                if (envKeystorePath) {
+                    def storePass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                    def alias = System.getenv("ANDROID_KEY_ALIAS")
+                    def keyPass = System.getenv("ANDROID_KEY_PASSWORD")
+                    if (!storePass || !alias || !keyPass) {
+                        throw new GradleException("Incomplete signing credentials: ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD must all be set when ANDROID_KEYSTORE_FILE is set")
+                    }
+                    storePassword storePass
+                    keyAlias alias
+                    keyPassword keyPass
+                } else {
+                    storePassword 'android123'
+                    keyAlias 'mori'
+                    keyPassword 'android123'
+                }
             }
         }
     }
@@ -46,7 +67,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (file('release.keystore').exists()) {
+            if (signingConfigs.release.storeFile != null && signingConfigs.release.storeFile.exists()) {
                 signingConfig signingConfigs.release
             }
         }

@@ -59,18 +59,32 @@ Preserves the upstream build and asset-naming behavior exactly:
 
 ### `build-android` (`ubuntu-latest`)
 
-- Node 20, Temurin JDK 17 (AGP 8.x), Gradle cache via `setup-java`.
+- Node 20, **Temurin JDK 21** (required by Capacitor 7 — its
+  `capacitor-android` module requests Java source release 21), Gradle cache
+  via `setup-java`; a dedicated step asserts `java -version` is 21 before the
+  build.
+- Signing secrets are validated and the keystore is decoded from
+  `ANDROID_KEYSTORE_BASE64` to a temporary file on the runner
+  (`ANDROID_KEYSTORE_FILE`); `keytool -list` checks it early so a bad
+  secret fails before the Gradle build. The credentials are passed to Gradle
+  as environment variables — nothing is echoed to the log.
 - `npx cap sync android` then `./gradlew assembleRelease --no-daemon`.
-- **No signing**: `android/app/build.gradle` only applies a signing config
-  when `release.keystore` exists, which it does not in CI — the APK stays
-  unsigned.
-- The output is renamed to `Mori-v{VERSION}-android-unsigned.apk`, uploaded
-  as the `Mori-Android-Unsigned-APK` workflow artifact, and attached to the
-  release when the ref is a tag.
+- The result must pass **`zipalign -c -v 4`** and
+  **`apksigner verify --verbose`** in a dedicated step; any failure fails the
+  job and no artifact is published.
+- The verified output is renamed to `Mori-v{VERSION}-android.apk`, uploaded
+  as the `Mori-Android-APK` workflow artifact, and attached to the release
+  when the ref is a tag.
+- A final `if: always()` step deletes the temporary keystore from the runner.
+- **Secrets required** (repository → Settings → Secrets and variables →
+  Actions): `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+  `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` — see `CONTRIBUTING.md`
+  (Building for Android → CI Signing Secrets). The job fails fast if any is
+  missing.
 
 ## Scope notes
 
 - Platforms: **Windows, macOS, Android** — Linux and iOS are intentionally
   out of scope for this workflow set (the old iOS job was removed).
-- No signing secrets or notarization are configured in this iteration; add
-  them via repository secrets before enabling signed builds.
+- Desktop artifacts (Tauri `.exe`/`.msi`/`.dmg`) are unsigned — no
+  notarization/signing secrets are configured for them yet.
