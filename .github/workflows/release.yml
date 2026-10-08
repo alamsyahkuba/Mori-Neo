@@ -136,11 +136,22 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: gradle
 
       - name: Install frontend dependencies
         run: npm ci || npm install
+
+      - name: Verify Java version (must be 21)
+        shell: bash
+        run: |
+          java -version
+          JAVA_MAJOR="$(java -version 2>&1 | sed -nE 's/.*version "([0-9]+).*/\1/p' | head -1)"
+          if [[ "$JAVA_MAJOR" != "21" ]]; then
+            echo "::error::Expected Java major version 21, got '${JAVA_MAJOR:-unknown}'"
+            exit 1
+          fi
+          echo "Java major version is 21 — Capacitor 7 requires source release 21."
 
       - name: Build unsigned release APK
         run: |
