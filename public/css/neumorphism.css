@@ -1,0 +1,1258 @@
+/* ==========================================================================
+   Mori — Neumorphism Design Layer
+   --------------------------------------------------------------------------
+   Loaded last (before rtl.css) in css/style.css.
+
+   This file implements the Neumorphism visual system on top of Mori's
+   existing markup and class names, without touching application logic:
+
+   1. Design tokens (light & dark)      — shadows, focus, accent depth
+   2. Elevation primitives              — raised / inset / float / pressed
+   3. Global affordances                — focus rings, reduced motion, selection
+   4. Surface treatment per component   — buttons, inputs, cards, nav, modals…
+
+   Conventions:
+   - Raised surfaces cast a dual shadow (light top-left, dark bottom-right).
+   - Inset surfaces are carved into the background (inputs, tracks, wells).
+   - Accent-filled elements (near-black/cream) use a depth drop shadow.
+   - Depth changes alone never communicate state: always pair with color,
+     icon or text changes.
+   - Elevation depth is modulated by the `glass-*` body classes
+     (remapped to elevation presets in variables.css).
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Elevation geometry (defaults = "soft" preset) */
+  --neo-y: 4px;
+  --neo-blur: 11px;
+  --neo-hover-y: 6px;
+  --neo-hover-blur: 16px;
+  --neo-i-y: 3px;
+  --neo-i-blur: 7px;
+
+  /* Light theme shadow colors */
+  --neo-hi-rgb: 255, 255, 255;
+  --neo-hi-a: 0.95;
+  --neo-sh-rgb: 163, 156, 143;
+  --neo-sh-a: 0.55;
+  --neo-hi-in-a: 0.85;
+  --neo-sh-in-a: 0.5;
+
+  /* Depth shadow for accent-filled elements (dark pill on light surface) */
+  --neo-accent-sh: 0 7px 18px rgba(26, 25, 23, 0.24);
+  --neo-accent-press: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+
+  /* Hairline separators */
+  --neo-divider: rgba(var(--primary-rgb), 0.09);
+
+  /* Composed shadow recipes */
+  --neo-hi: rgba(var(--neo-hi-rgb), var(--neo-hi-a));
+  --neo-sh: rgba(var(--neo-sh-rgb), var(--neo-sh-a));
+  --neo-hi-in: rgba(var(--neo-hi-rgb), var(--neo-hi-in-a));
+  --neo-sh-in: rgba(var(--neo-sh-rgb), var(--neo-sh-in-a));
+
+  --neo-raise:
+    calc(var(--neo-y) * -1) calc(var(--neo-y) * -1) var(--neo-blur)
+      var(--neo-hi),
+    var(--neo-y) var(--neo-y) var(--neo-blur) var(--neo-sh);
+  --neo-raise-sm:
+    calc(var(--neo-y) * -0.5) calc(var(--neo-y) * -0.5)
+      calc(var(--neo-blur) * 0.7) var(--neo-hi),
+    calc(var(--neo-y) * 0.5) calc(var(--neo-y) * 0.5)
+      calc(var(--neo-blur) * 0.7) var(--neo-sh);
+  --neo-raise-hover:
+    calc(var(--neo-hover-y) * -1) calc(var(--neo-hover-y) * -1)
+      var(--neo-hover-blur) var(--neo-hi),
+    var(--neo-hover-y) var(--neo-hover-y) var(--neo-hover-blur) var(--neo-sh);
+  --neo-float:
+    calc(var(--neo-y) * -1.5) calc(var(--neo-y) * -1.5)
+      calc(var(--neo-blur) * 1.8) var(--neo-hi),
+    calc(var(--neo-y) * 1.8) calc(var(--neo-y) * 1.8)
+      calc(var(--neo-blur) * 1.9) var(--neo-sh);
+  --neo-inset:
+    inset var(--neo-i-y) var(--neo-i-y) var(--neo-i-blur) var(--neo-sh-in),
+    inset calc(var(--neo-i-y) * -1) calc(var(--neo-i-y) * -1)
+      var(--neo-i-blur) var(--neo-hi-in);
+  --neo-inset-sm:
+    inset calc(var(--neo-i-y) * 0.6) calc(var(--neo-i-y) * 0.6)
+      calc(var(--neo-i-blur) * 0.7) var(--neo-sh-in),
+    inset calc(var(--neo-i-y) * -0.6) calc(var(--neo-i-y) * -0.6)
+      calc(var(--neo-i-blur) * 0.7) var(--neo-hi-in);
+}
+
+[data-theme="dark"] {
+  /* Dark theme: subtle top-left sheen, deep bottom-right shade */
+  --neo-hi-rgb: 255, 255, 255;
+  --neo-hi-a: 0.055;
+  --neo-sh-rgb: 0, 0, 0;
+  --neo-sh-a: 0.6;
+  --neo-hi-in-a: 0.05;
+  --neo-sh-in-a: 0.55;
+
+  --neo-accent-sh: 0 7px 20px rgba(0, 0, 0, 0.5);
+  --neo-accent-press: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+
+  --neo-divider: rgba(var(--primary-rgb), 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   2. Elevation primitives (reusable building blocks)
+   -------------------------------------------------------------------------- */
+
+.neo-raised {
+  background: var(--surface);
+  box-shadow: var(--neo-raise);
+}
+
+.neo-inset {
+  background: var(--surface);
+  box-shadow: var(--neo-inset);
+}
+
+.neo-float {
+  background: var(--surface);
+  box-shadow: var(--neo-float);
+}
+
+.neo-pressed {
+  box-shadow: var(--neo-inset) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. Global affordances
+   -------------------------------------------------------------------------- */
+
+::selection {
+  background: rgba(var(--primary-rgb), 0.18);
+  color: var(--text-main);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Slim, unobtrusive scrollbars that match the surfaces */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--primary-rgb), 0.25) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--primary-rgb), 0.22);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--primary-rgb), 0.4);
+}
+
+:where(
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Visible focus for visually-hidden checkbox inputs */
+.toggle-switch input:focus-visible + label,
+.guide-checkbox input:focus-visible + .checkmark {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Layout & header
+   -------------------------------------------------------------------------- */
+
+header {
+  margin-bottom: 28px;
+}
+
+header h1 {
+  letter-spacing: 6px;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   5. Bottom navigation — floating raised bar with inset active pill
+   -------------------------------------------------------------------------- */
+
+.bottom-nav {
+  left: 0;
+  right: 0;
+  width: min(calc(100% - 24px), 476px);
+  margin: 0 auto;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  border-top: none;
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 8px;
+  gap: 4px;
+  box-shadow: var(--neo-float);
+  justify-content: space-between;
+}
+
+.is-desktop .bottom-nav {
+  padding: 8px;
+}
+
+.nav-item {
+  border-radius: 18px;
+  margin: 2px 4px;
+  padding: 8px 4px;
+  min-height: 52px;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+}
+
+.nav-item:hover {
+  color: var(--text-main);
+}
+
+.nav-item.active {
+  background: var(--bg-color);
+  box-shadow: var(--neo-inset-sm);
+  color: var(--text-main);
+}
+
+.nav-item.active svg {
+  transform: none;
+}
+
+.nav-item:active {
+  box-shadow: var(--neo-inset-sm);
+}
+
+/* --------------------------------------------------------------------------
+   6. Inputs, buttons & chips
+   -------------------------------------------------------------------------- */
+
+input[type="text"],
+.batch-url-textarea {
+  background-color: var(--bg-color);
+  border: 1px solid rgba(var(--primary-rgb), 0.07);
+  box-shadow: var(--neo-inset);
+}
+
+input[type="text"]:focus,
+.batch-url-textarea:focus {
+  border-color: rgba(var(--primary-rgb), 0.18);
+  box-shadow:
+    var(--neo-inset),
+    0 0 0 2px rgba(var(--primary-rgb), 0.3);
+}
+
+input[type="text"]:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+.batch-url-textarea {
+  padding-right: 86px;
+}
+
+.search-icon {
+  color: var(--text-secondary);
+  filter: none;
+  opacity: 1;
+}
+
+.input-action-btn {
+  width: 34px;
+  height: 34px;
+  top: 9px;
+  right: 10px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-secondary);
+  box-shadow: var(--neo-raise-sm);
+  transition:
+    box-shadow 0.16s ease,
+    transform 0.12s ease,
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.input-action-btn:hover {
+  color: var(--primary);
+  box-shadow: var(--neo-raise);
+}
+
+.input-action-btn:active {
+  box-shadow: var(--neo-inset-sm);
+  transform: translateY(1px);
+}
+
+.input-wrapper.batch-active .input-action-btn {
+  top: 14px;
+}
+
+.input-action-btn.active {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.batch-toggle-btn {
+  right: 44px !important;
+}
+
+#downloadBtn {
+  background-color: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  box-shadow: var(--neo-accent-sh);
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.12s ease,
+    filter 0.18s ease;
+}
+
+#downloadBtn:hover {
+  background-color: color-mix(in srgb, var(--primary) 86%, var(--on-primary));
+  transform: translateY(-1px);
+  box-shadow:
+    var(--neo-accent-sh),
+    0 12px 26px rgba(var(--primary-rgb), 0.3);
+}
+
+#downloadBtn:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-accent-press);
+}
+
+#downloadBtn:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+  transform: none;
+}
+
+#downloadBtn.is-cancelling {
+  color: var(--danger-text) !important;
+}
+
+.primary-btn,
+.secondary-btn {
+  transition:
+    box-shadow 0.16s ease,
+    transform 0.12s ease,
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+/* Platform chips — small raised tiles, pressed when tapped */
+.chip {
+  background-color: var(--surface);
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: var(--neo-raise-sm);
+  transition:
+    box-shadow 0.16s ease,
+    transform 0.12s ease,
+    background-color 0.16s ease;
+}
+
+.chip:hover,
+.chip:active {
+  box-shadow: var(--neo-raise);
+  background-color: var(--surface);
+  color: var(--text-main);
+}
+
+.chip:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-inset-sm);
+}
+
+/* --------------------------------------------------------------------------
+   7. Home — loader, progress, media card, download options
+   -------------------------------------------------------------------------- */
+
+.skeleton-card {
+  background-color: var(--surface);
+  border: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--neo-raise);
+}
+
+.skeleton-line {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--primary-rgb), 0.06) 25%,
+    rgba(var(--primary-rgb), 0.13) 50%,
+    rgba(var(--primary-rgb), 0.06) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-s);
+}
+
+.skeleton-thumb {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--primary-rgb), 0.05) 25%,
+    rgba(var(--primary-rgb), 0.11) 50%,
+    rgba(var(--primary-rgb), 0.05) 75%
+  );
+  background-size: 200% 100%;
+}
+
+.progress-container {
+  background-color: var(--bg-color);
+  border: none;
+  height: 8px;
+  border-radius: 999px;
+  box-shadow: var(--neo-inset-sm);
+}
+
+.progress-bar {
+  background: var(--primary);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+.media-card {
+  background-color: var(--surface);
+  border: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--neo-raise);
+}
+
+.thumbnail-wrapper {
+  background-color: var(--bg-color);
+  border-bottom: none;
+  box-shadow: inset 0 -1px 0 var(--neo-divider);
+}
+
+.download-options {
+  border-top: none;
+  box-shadow: inset 0 1px 0 var(--neo-divider);
+}
+
+.dl-item {
+  border-bottom: 1px solid var(--neo-divider);
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.dl-item:hover {
+  background-color: rgba(var(--primary-rgb), 0.04);
+  filter: none;
+}
+
+.dl-item:active {
+  background-color: rgba(var(--primary-rgb), 0.07);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.dl-item .dl-badge {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.dl-all-btn {
+  border: none !important;
+  border-radius: var(--radius-l) !important;
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+  box-shadow: var(--neo-accent-sh);
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.12s ease,
+    filter 0.18s ease;
+}
+
+.dl-all-btn:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--primary) 86%,
+    var(--on-primary)
+  ) !important;
+  filter: none;
+}
+
+.dl-all-btn:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-accent-press);
+  filter: none;
+}
+
+.pdf-btn {
+  border: none !important;
+  border-radius: var(--radius-l) !important;
+  background-color: var(--surface) !important;
+  color: var(--text-main) !important;
+  box-shadow: var(--neo-raise-sm);
+  transition:
+    box-shadow 0.16s ease,
+    transform 0.12s ease,
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.pdf-btn:hover {
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+  box-shadow: var(--neo-accent-sh);
+}
+
+.pdf-btn:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-accent-press);
+}
+
+.close-card {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   8. Toast & download bubble
+   -------------------------------------------------------------------------- */
+
+.custom-toast {
+  background: var(--surface);
+  border: none;
+  box-shadow: var(--neo-float);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.download-bubble-btn {
+  background: var(--surface);
+  border: none;
+  box-shadow: var(--neo-raise);
+  color: var(--primary);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.download-bubble-btn:hover {
+  box-shadow: var(--neo-raise-hover);
+  transform: scale(1.05);
+}
+
+.download-bubble-btn:active {
+  transform: scale(0.95);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.download-bubble-dropup {
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--neo-float);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.dbd-header {
+  border-bottom: 1px solid var(--neo-divider);
+}
+
+.dbd-item {
+  background: rgba(var(--primary-rgb), 0.05);
+  border: none;
+  border-radius: var(--radius-s);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.dbd-item.completed {
+  background: rgba(var(--primary-rgb), 0.09);
+  box-shadow:
+    var(--neo-inset-sm),
+    inset 0 0 0 1px rgba(var(--primary-rgb), 0.25);
+}
+
+.dbd-item-track {
+  background: rgba(var(--primary-rgb), 0.14);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.16);
+}
+
+/* --------------------------------------------------------------------------
+   9. Settings
+   -------------------------------------------------------------------------- */
+
+.settings-menu-item {
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: var(--neo-raise-sm);
+}
+
+.settings-menu-item:hover {
+  background: var(--surface);
+  transform: none;
+  box-shadow: var(--neo-raise);
+}
+
+[data-theme="dark"] .settings-menu-item:hover {
+  background: var(--surface);
+}
+
+.settings-menu-item:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.menu-icon {
+  background: var(--bg-color);
+  border: none;
+  border-radius: var(--radius-s);
+  box-shadow: var(--neo-inset-sm);
+  color: var(--primary);
+}
+
+.settings-list {
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: var(--neo-raise);
+}
+
+.settings-item {
+  border-bottom: 1px solid var(--neo-divider);
+  transition: background-color 0.16s ease;
+}
+
+.settings-item.path-setting-item {
+  border-bottom: 1px solid var(--neo-divider);
+}
+
+.settings-item:hover {
+  background-color: rgba(var(--primary-rgb), 0.03);
+}
+
+.settings-item:has(.custom-select):hover,
+.settings-item.path-setting-item:hover {
+  background-color: transparent;
+}
+
+.back-btn-settings {
+  background: var(--surface);
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+}
+
+.back-btn-settings:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--neo-accent-sh);
+}
+
+.back-btn-settings:active {
+  box-shadow: var(--neo-accent-press);
+  transform: translateY(1px);
+}
+
+.action-label {
+  color: var(--danger-text);
+}
+
+.action-label.danger {
+  color: var(--danger-text);
+  text-shadow: none;
+}
+
+.custom-select {
+  background: var(--surface);
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+  transition:
+    box-shadow 0.16s ease,
+    transform 0.12s ease;
+}
+
+.custom-select:hover {
+  box-shadow: var(--neo-raise);
+}
+
+.custom-select:active,
+.custom-select:has(.dropdown-menu:not(.hidden)) {
+  box-shadow: var(--neo-inset-sm);
+}
+
+.dropdown-menu {
+  background: var(--surface) !important;
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--neo-float);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.dropdown-menu .dropdown-item:hover {
+  background: rgba(var(--primary-rgb), 0.07);
+}
+
+[data-theme="dark"] .dropdown-menu .dropdown-item:hover {
+  background: rgba(var(--primary-rgb), 0.07);
+}
+
+/* Toggle switch — inset track, raised knob */
+.toggle-switch {
+  width: 46px;
+  height: 26px;
+}
+
+.toggle-switch label {
+  background-color: rgba(var(--primary-rgb), 0.5);
+  box-shadow: var(--neo-inset-sm);
+  transition: background-color 0.25s ease;
+}
+
+.toggle-switch label:before {
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--bg-color);
+  box-shadow: var(--neo-raise-sm);
+}
+
+.toggle-switch input:checked + label {
+  background-color: var(--primary);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.toggle-switch input:checked + label:before {
+  transform: translateX(20px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Range slider — inset track, raised thumb */
+.bg-range-slider {
+  background: rgba(var(--primary-rgb), 0.18);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.bg-range-slider::-webkit-slider-thumb {
+  background: var(--primary);
+  border: none;
+  box-shadow:
+    var(--neo-raise-sm),
+    0 0 0 3px var(--bg-color);
+}
+
+/* Path / info pills — inset wells */
+.info-val.selectable {
+  background: rgba(var(--primary-rgb), 0.06);
+  border: none;
+  border-radius: var(--radius-s);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.settings-item .info-val {
+  opacity: 1;
+}
+
+.path-display-pill {
+  background: rgba(var(--primary-rgb), 0.05);
+  border: none;
+  border-radius: var(--radius-s);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.settings-item.path-setting-item:hover .path-display-pill {
+  background: rgba(var(--primary-rgb), 0.08);
+  border-color: transparent;
+}
+
+.path-text {
+  background: rgba(var(--primary-rgb), 0.05);
+  border: none;
+  border-radius: var(--radius-s);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.path-text:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+}
+
+.path-text.file-deleted {
+  background: rgba(255, 68, 68, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 68, 68, 0.4);
+}
+
+.mori-input-with-icon {
+  background: var(--bg-color);
+  border: none;
+  border-radius: var(--radius-s);
+  box-shadow: var(--neo-inset);
+}
+
+.mori-input-with-icon:focus-within {
+  border-color: transparent;
+  box-shadow:
+    var(--neo-inset),
+    0 0 0 2px rgba(var(--primary-rgb), 0.3);
+}
+
+.path-preset-chip {
+  background: rgba(var(--primary-rgb), 0.06);
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+}
+
+.path-preset-chip:hover {
+  background: rgba(var(--primary-rgb), 0.1);
+  border-color: transparent;
+  box-shadow: var(--neo-raise);
+}
+
+.path-preset-chip:active,
+.path-preset-chip.active {
+  box-shadow: var(--neo-inset-sm);
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.path-preset-chip.browse-chip {
+  background: rgba(var(--primary-rgb), 0.12);
+}
+
+.reset-path-btn {
+  background: var(--surface);
+  border: none;
+  color: var(--text-secondary);
+  border-radius: var(--radius-s);
+  box-shadow: var(--neo-raise-sm);
+}
+
+.reset-path-btn:hover {
+  background: var(--surface);
+  color: var(--text-main);
+  border-color: transparent;
+  box-shadow: var(--neo-raise);
+}
+
+.reset-path-btn:active {
+  box-shadow: var(--neo-inset-sm);
+}
+
+.mori-status-chip {
+  background: rgba(var(--primary-rgb), 0.08);
+}
+
+.mori-status-chip.granted {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--text-main);
+}
+
+.mori-status-chip.warning {
+  background: rgba(234, 179, 8, 0.2);
+  color: var(--text-main);
+}
+
+.bg-anim-card {
+  background-color: var(--surface);
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: var(--neo-raise);
+}
+
+.bg-shape-card {
+  background: rgba(var(--primary-rgb), 0.06);
+  border: none;
+  box-shadow: var(--neo-inset-sm);
+}
+
+.bg-shape-card:hover {
+  background: rgba(var(--primary-rgb), 0.1);
+}
+
+.bg-shape-card:active {
+  transform: translateY(1px);
+}
+
+.bg-shape-card.active {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--neo-accent-press);
+}
+
+.bg-shape-card.active .shape-preview-circle,
+.bg-shape-card.active .shape-title {
+  color: var(--on-primary);
+}
+
+.link-item:hover {
+  background-color: rgba(var(--primary-rgb), 0.05);
+  filter: none;
+}
+
+/* --------------------------------------------------------------------------
+   10. History
+   -------------------------------------------------------------------------- */
+
+.history-item {
+  background-color: var(--surface);
+  border: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--neo-raise-sm);
+}
+
+.history-item:hover {
+  box-shadow: var(--neo-raise);
+}
+
+.history-item:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.history-item.is-favorite {
+  border: none;
+  background: linear-gradient(
+    90deg,
+    var(--surface) 0%,
+    rgba(255, 59, 92, 0.06) 100%
+  );
+}
+
+.history-stats-card {
+  background-color: var(--surface);
+  border: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--neo-raise);
+}
+
+.history-stats-card .stats-divider {
+  background-color: var(--neo-divider);
+}
+
+.history-thumb-container {
+  background-color: var(--bg-color);
+  border: none;
+  box-shadow: var(--neo-inset-sm);
+}
+
+.edit-btn,
+.clear-all-btn {
+  background: var(--surface);
+  border: none;
+  color: var(--text-main);
+  box-shadow: var(--neo-raise-sm);
+}
+
+.edit-btn:hover {
+  box-shadow: var(--neo-raise);
+}
+
+.clear-all-btn:hover {
+  background: var(--surface);
+  transform: none;
+  box-shadow: var(--neo-raise);
+}
+
+.edit-btn:active,
+.clear-all-btn:active {
+  background: var(--surface);
+  color: var(--text-main);
+  box-shadow: var(--neo-inset-sm);
+  transform: translateY(1px);
+}
+
+.done-btn:active {
+  box-shadow: var(--neo-inset-sm);
+  transform: translateY(1px);
+}
+
+.done-btn {
+  background: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  box-shadow: var(--neo-accent-sh);
+}
+
+.delete-item-btn {
+  background: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  box-shadow: var(--neo-accent-sh);
+}
+
+.delete-item-btn:hover,
+.delete-item-btn:active {
+  background: var(--primary);
+  color: var(--on-primary);
+  transform: translateY(-50%) scale(0.9);
+  box-shadow: var(--neo-inset-sm);
+}
+
+.empty-state {
+  border: 1px dashed rgba(var(--primary-rgb), 0.3);
+  background: rgba(var(--primary-rgb), 0.03);
+  color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   11. Modals & overlays
+   -------------------------------------------------------------------------- */
+
+.modal-content {
+  background-color: var(--surface) !important;
+  border: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--neo-float);
+}
+
+.confirm-modal {
+  box-shadow: var(--neo-float);
+}
+
+.modal-header,
+.info-modal .modal-header {
+  border-bottom: 1px solid var(--neo-divider);
+}
+
+.confirm-actions {
+  border-top: 1px solid var(--neo-divider);
+}
+
+.confirm-actions .cancel-btn {
+  border-right: 0;
+  border-inline-end: 1px solid var(--neo-divider);
+}
+
+.confirm-actions .ok-btn {
+  color: var(--danger-text);
+}
+
+.path-status {
+  color: var(--danger-text);
+}
+
+.modal-fav-btn {
+  background: var(--surface);
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+}
+
+.modal-fav-btn:hover {
+  box-shadow: var(--neo-raise);
+}
+
+.modal-fav-btn:active {
+  box-shadow: var(--neo-inset-sm);
+}
+
+.modal-thumb-container {
+  background-color: var(--bg-color);
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: var(--neo-inset);
+}
+
+.guide-actions button {
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  box-shadow: var(--neo-raise-sm);
+}
+
+.guide-actions button:active {
+  box-shadow: var(--neo-inset-sm);
+}
+
+.checkmark {
+  border: 2px solid rgba(var(--primary-rgb), 0.4);
+  background: var(--bg-color);
+  box-shadow: var(--neo-inset-sm);
+  opacity: 1;
+}
+
+.guide-checkbox input:checked + .checkmark {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: var(--neo-accent-sh);
+}
+
+.pin-key {
+  background: var(--surface);
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+}
+
+.pin-key:hover {
+  box-shadow: var(--neo-raise);
+}
+
+.pin-key:active {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--neo-inset-sm);
+  transform: scale(0.96);
+}
+
+.batch-item {
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: var(--neo-raise-sm);
+}
+
+.batch-counter {
+  background: var(--bg-color);
+  border: none;
+  box-shadow: var(--neo-inset-sm);
+}
+
+.batch-item-status.pending,
+.batch-item-status.analyzing,
+.batch-item-status.cancelled {
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--text-secondary);
+}
+
+.batch-item-status.analyzing {
+  background: rgba(var(--primary-rgb), 0.18);
+  color: var(--text-main);
+}
+
+.batch-item-status.success,
+.batch-item-status.completed {
+  background: rgba(46, 204, 113, 0.16);
+  color: var(--text-main);
+}
+
+.batch-item-status.downloading {
+  background: rgba(52, 152, 219, 0.16);
+  color: var(--text-main);
+}
+
+.batch-item-status.error {
+  background: rgba(231, 76, 60, 0.14);
+  color: var(--text-main);
+}
+
+.batch-item-status.skipped {
+  background: rgba(230, 126, 34, 0.16);
+  color: var(--text-main);
+}
+
+#batchDownloadAllBtn {
+  background-color: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  box-shadow: var(--neo-accent-sh);
+}
+
+#batchDownloadAllBtn:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-accent-press);
+}
+
+#batchCloseBtn {
+  background: var(--surface);
+  color: var(--text-main);
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+}
+
+#batchCloseBtn:active {
+  box-shadow: var(--neo-inset-sm);
+}
+
+#redownloadBtn {
+  background-color: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: var(--neo-accent-sh);
+}
+
+#redownloadBtn:active {
+  transform: translateY(1px);
+  box-shadow: var(--neo-accent-press);
+}
+
+/* --------------------------------------------------------------------------
+   12. Misc states & text
+   -------------------------------------------------------------------------- */
+
+.data-saver-placeholder {
+  background-color: var(--bg-color);
+}
+
+.download-bubble-container {
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.mori-player-big-play {
+  border: none;
+  box-shadow: var(--neo-raise-sm);
+}
+
+#loader {
+  margin-top: 28px;
+}
+
+#resultSection {
+  margin-top: 28px;
+}
+
+.supported-section {
+  margin-top: 32px;
+}
+
+body {
+  color: var(--text-main);
+}
+
+@media (max-width: 380px) {
+  header {
+    margin-bottom: 20px;
+  }
+
+  .platform-chips {
+    gap: 10px;
+  }
+
+  .nav-item span {
+    font-size: 0.55rem;
+  }
+}
