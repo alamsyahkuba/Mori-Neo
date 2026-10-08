@@ -151,4 +151,47 @@ of a `release: update to vX.Y.Z` commit.
 
 ---
 
-*This file is updated again at the end of the implementation with final verification results.*
+## 9. Final verification (post-implementation)
+
+### Branch layout (nothing merged to `main`)
+
+| Branch                 | Base     | Commits | Contents |
+| ---------------------- | -------- | ------- | -------- |
+| `feat/neumorphism-ui`  | `b4ddad2`| 6       | baseline doc, neumorphism design layer, label relabels, a11y fixes, review fixes, design docs |
+| `feat/github-actions`  | `b4ddad2`| 3       | `ci.yml` + `release.yml` (old workflows removed), `docs/CI.md`, `docs/RELEASE.md` |
+| `main`                 | —        | untouched | `b4ddad2 release: update to v4.4.0` |
+
+### Validation results — all pass
+
+| Check | Result |
+| ----- | ------ |
+| `npx esbuild public/css/style.css --bundle` | ✅ (~97 kb, parses + resolves all `@import`s) |
+| `npx esbuild public/js/app.js --bundle --format=esm` | ✅ |
+| `npx esbuild public/js/share.js --bundle --format=esm` | ✅ |
+| `test -s public/js/scrapers/bundle.js` | ✅ (82391 bytes) |
+| Selector audit — every class/id in `neumorphism.css` exists in markup/JS | ✅ 0 missing |
+| Undefined `var(--…)` references across the design layer | ✅ 0 |
+| jsdom boot smoke, light theme | ✅ theme `light`, preset classes applied, Elevation labels, 0 errors |
+| jsdom boot smoke, dark theme | ✅ theme `dark`, `glass-deep`, accent `#fffbf2`, 0 errors |
+| `npx --yes js-yaml .github/workflows/*.yml` | ✅ both files parse (invalid YAML exits 1 — verified) |
+| `actionlint v1.7.7` on both workflows | ✅ 0 findings |
+| WCAG contrast sweep (palette, tints, toggle, danger text, badges) | ✅ all ≥ 4.5:1 text / ≥ 3:1 controls |
+| Independent design-layer review (29 findings) | ✅ all addressed (2 intentional keeps: `.neo-*` primitives, defensive modal rule) |
+
+### Environment limits (unchanged)
+
+- No Rust/Java/GUI here → Tauri/Android builds and browser screenshots are
+  validated by the GitHub Actions runs after these branches are pushed.
+- jsdom harness lives outside the repo (`/tmp/opencode/uicheck/boot.js`);
+  commands to recreate it are in `UI_DESIGN.md`.
+
+### Next steps for the maintainer
+
+1. Review the two branches; merge `feat/github-actions` and
+   `feat/neumorphism-ui` into `main` deliberately (in either order — they
+   touch disjoint files; both add root-level markdown only).
+2. Push to exercise `ci.yml` (PR/push to `main`) and `release.yml`
+   (push a `v*` tag) on real runners.
+3. On the next version bump, update the three version sources listed in §7
+   together — `release.yml` fails fast if they diverge from the tag.
+
